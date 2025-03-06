@@ -1,12 +1,9 @@
 const express = require("express");
 const connectDB = require("./config/database");
 const User = require("./models/user");
-const { validateSignUpData } = require("./utils/validation");
-const bcrypt = require("bcrypt");
-const validator = require("validator");
 const cookieParser = require("cookie-parser");
-const jwt = require("jsonwebtoken");
-const { userAuth } = require("./middlewares/auth");
+const authRouter = require("./routes/auth");
+const pofileRouter = require("./routes/profile");
 require("dotenv").config();
 
 const app = express();
@@ -14,67 +11,8 @@ app.use(express.json());
 app.use(cookieParser());
 
 
-app.post("/signup", async (req, res) => {
-  try {
-    validateSignUpData(req);
-    const { firstname, lastname, email, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const userObj = {
-      firstname,
-      lastname,
-      email,
-      password: hashedPassword,
-    };
-
-    const user = new User(userObj);
-    await user.save();
-    res.send("User created");
-  } catch (error) {
-    res.status(400).send("Error saving the user" + error.message);
-  }
-});
-
-app.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    if (!validator.isEmail(email)) {
-      throw new Error("invalid email");
-    }
-
-    const user = await User.findOne({ email: email });
-    if (!user) {
-      throw new Error("Invalid credentials");
-    }
-
-    const isPasswordValid = await user.validatePasword(password);
-    if (isPasswordValid) {
-      const token = await user.getJWT();
-      console.log(token);
-      
-      res.cookie("token", token)
-      res.send("Login successfull");
-    } else {
-      throw new Error("Invalid credentials");
-    }
-  } catch (error) {
-    res.status(400).send("Error:" + error.message);
-  }
-});
-
-app.get("/profile",userAuth, async (req, res)=>{
-  try {
-    
-    const user = req.user;
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    res.send(user);
-    
-  } catch (error) {
-    res.status(400).send("Error:" + error.message);
-  }
-})
+app.use("/", authRouter);
+app.use("/", pofileRouter);
 
 app.get("/users", async (req, res) => {
   const userId = req.body?.userId;

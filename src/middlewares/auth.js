@@ -6,12 +6,12 @@ const userAuth = async (req, res, next) => {
     if (!token) {
       throw new Error("Token not valid!!");
     }
-    const decodedData = await jwt.verify(token, "Hbaeel@123");
+    const decodedData =  jwt.verify(token, "Hbaeel@123");
 
     const { _id } = decodedData;
     const user = await User.findById(_id);
     if (!user) {
-      throw new Erro("Please authenticate");
+      throw new Error("Please authenticate");
     }
     req.user = user;
     next();

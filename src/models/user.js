@@ -70,11 +70,19 @@ userSchema.methods.getJWT = async function () {
 userSchema.methods.validatePasword = async function (passwordInputByUser) {
   const user = this;
   const passwordHash = user.password;
-  const isPasswordValid = await await bcrypt.compare(
+  const isPasswordValid = await bcrypt.compare(
     passwordInputByUser,
     passwordHash
   );
   return isPasswordValid;
 };
+
+userSchema.methods.generatePasswordResetToken = async function () {
+    const user = this;
+    const resetToken = await jwt.sign({_id:user._id}, "Hbaeel@123", {
+        expiresIn: "1h",
+    })
+    return resetToken;
+}
 
 module.exports = mongoose.model("User", userSchema);

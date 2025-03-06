@@ -15,6 +15,29 @@ const validateSignUpData =(req)=>{
 
 }
 
+const validateEditProfileData= (data)=>{
+    const Allowed_Updates = [
+        "photoUrl",
+        "firstname",
+        "lastname",
+        "gender",
+        "about",
+        "email",
+        "skills",
+      ];
+      const updates = Object.keys(data).every((keys) =>
+        Allowed_Updates.includes(keys)
+      );
+
+      return updates
+  
+    //   if (!updates) {
+    //     throw new Error("UPDATE NOT ALLOWED");
+    //   }
+}
+
+
+
 module.exports = {
-    validateSignUpData
+    validateSignUpData, validateEditProfileData
 }
