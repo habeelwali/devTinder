@@ -4,6 +4,7 @@ const User = require("./models/user");
 const cookieParser = require("cookie-parser");
 const authRouter = require("./routes/auth");
 const pofileRouter = require("./routes/profile");
+const requestRouter = require("./routes/requests");
 require("dotenv").config();
 
 const app = express();
@@ -13,6 +14,7 @@ app.use(cookieParser());
 
 app.use("/", authRouter);
 app.use("/", pofileRouter);
+app.use("/", requestRouter)
 
 app.get("/users", async (req, res) => {
   const userId = req.body?.userId;
