@@ -4,9 +4,12 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const validator = require("validator");
 const { validateSignUpData } = require('../utils/validation');
+const sendResetPasswordEmail = require('../config/nodemailer');
 
 
 const authRouter = express.Router();
+
+const USER_SAFE_DATA = "firstname lastname photoUrl email age about skills";
 authRouter.post("/signup", async (req, res) => {
     try {
       validateSignUpData(req);
@@ -34,7 +37,12 @@ authRouter.post("/signup", async (req, res) => {
         throw new Error("invalid email");
       }
   
-      const user = await User.findOne({ email: email });
+      const user = await User.findOne({ email: email }).populate(
+        "photoUrl","imageUrl"
+
+      )
+      console.log("user", user);
+      
       if (!user) {
         throw new Error("Invalid credentials");
       }
@@ -42,10 +50,13 @@ authRouter.post("/signup", async (req, res) => {
       const isPasswordValid = await user.validatePasword(password);
       if (isPasswordValid) {
         const token = await user.getJWT();
-        console.log(token);
-        
         res.cookie("token", token)
-        res.send("Login successfull");
+        const userObj = user.toObject();
+        delete userObj.password
+        res.json({
+          message:"Login Successfully",
+          data:userObj
+        })
       } else {
         throw new Error("Invalid credentials");
       }
@@ -65,11 +76,13 @@ authRouter.post("/signup", async (req, res) => {
               throw new Error("User not found");
           }
           const token = await user.generatePasswordResetToken();
+          await user.save({ validateBeforeSave: false });
+
+    // Send reset email
+    await sendResetPasswordEmail(email, token);
 
           res.json({
-              message: "Reset password  token sent to your email",
-              restToken: token
-          })
+              message: "Reset password  token sent to your email"})
           
           
       } catch (error) {
@@ -112,9 +125,12 @@ authRouter.post("/signup", async (req, res) => {
 
   authRouter.post("/logout",async (req, res)=>{
     res.cookie("token", null, {
+      
         expires: new Date(Date.now()),
     })
-    res.send("logout Successfull!!");
+    res.json({
+      message: "Logged out successfully",
+    });
 
   })
 

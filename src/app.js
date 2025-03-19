@@ -5,16 +5,25 @@ const cookieParser = require("cookie-parser");
 const authRouter = require("./routes/auth");
 const pofileRouter = require("./routes/profile");
 const requestRouter = require("./routes/requests");
+const userRouter = require("./routes/user");
+var cors = require('cors')
+
 require("dotenv").config();
 
+
 const app = express();
+app.use(cors({
+   credentials: true,
+  origin: "http://localhost:5173"
+}))
 app.use(express.json());
 app.use(cookieParser());
 
 
 app.use("/", authRouter);
 app.use("/", pofileRouter);
-app.use("/", requestRouter)
+app.use("/", requestRouter);
+app.use("/",userRouter);
 
 app.get("/users", async (req, res) => {
   const userId = req.body?.userId;

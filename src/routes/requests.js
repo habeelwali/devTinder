@@ -93,66 +93,66 @@ requestRouter.post(
   }
 );
 
-requestRouter.get("/user/connections", userAuth, async (req, res) => {
-  try {
+// requestRouter.get("/user/connections", userAuth, async (req, res) => {
+//   try {
 
-    const connection = await ConnectionRequest.find({
-        $or:[
-            {toUserId:req.user._id,status:"accepted"},
-            {fromUserId:req.user._id, status:"accepted"},
-        ]
+//     const connection = await ConnectionRequest.find({
+//         $or:[
+//             {toUserId:req.user._id,status:"accepted"},
+//             {fromUserId:req.user._id, status:"accepted"},
+//         ]
        
-    }).populate("fromUserId", [
-        "firstname",
-        "lastname",
-        "photoUrl",
-        "age",
-        "about",
-        "skills",
-      ]).populate("toUserId", [
-        "firstname",
-        "lastname",
-        "photoUrl",
-        "age",
-        "about",
-        "skills",
-      ]);
+//     }).populate("fromUserId", [
+//         "firstname",
+//         "lastname",
+//         "photoUrl",
+//         "age",
+//         "about",
+//         "skills",
+//       ]).populate("toUserId", [
+//         "firstname",
+//         "lastname",
+//         "photoUrl",
+//         "age",
+//         "about",
+//         "skills",
+//       ]);
 
-      const data = connection.map((row)=>{
-        if(row.fromUserId._id.toString() ===req.user._id.toString()){
-            return row.toUserId
-        }
-        return row.fromUserId
-      }
-       )
-    res.json({
-        message: "Connection Request Retrieved Successfully",
-        data
-    });
-  } catch (error) {
-    res.status(400).send("ERROR: " + error.message);
-  }
-});
+//       const data = connection.map((row)=>{
+//         if(row.fromUserId._id.toString() ===req.user._id.toString()){
+//             return row.toUserId
+//         }
+//         return row.fromUserId
+//       }
+//        )
+//     res.json({
+//         message: "Connection Request Retrieved Successfully",
+//         data
+//     });
+//   } catch (error) {
+//     res.status(400).send("ERROR: " + error.message);
+//   }
+// });
 
-requestRouter.get("/user/requests/recived", userAuth, async (req, res) => {
-  try {
-    const connection = await ConnectionRequest.find({
-      toUserId: req.user._id,
-      status: "interested",
-    }).populate("fromUserId", [
-      "firstname",
-      "lastname",
-      "photoUrl",
-      "age",
-      "about",
-      "skills",
-    ]);
-    res.json({
-        message: "Connection Request Retrieved Successfully",
-        data: connection
-    });
-  } catch (error) {
-    res.status(400).send("ERROR: " + error.message);
-  }
-});
+// requestRouter.get("/user/requests/recived", userAuth, async (req, res) => {
+//   try {
+//     const connection = await ConnectionRequest.find({
+//       toUserId: req.user._id,
+//       status: "interested",
+//     }).populate("fromUserId", [
+//       "firstname",
+//       "lastname",
+//       "photoUrl",
+//       "age",
+//       "about",
+//       "skills",
+//     ]);
+//     res.json({
+//         message: "Connection Request Retrieved Successfully",
+//         data: connection
+//     });
+//   } catch (error) {
+//     res.status(400).send("ERROR: " + error.message);
+//   }
+// });
 module.exports = requestRouter;

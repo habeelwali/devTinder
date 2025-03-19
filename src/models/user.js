@@ -43,12 +43,11 @@ const userSchema = new mongoose.Schema(
       },
     },
     photoUrl: {
-      type: String,
-      validate(value) {
-        if (!validator.isURL(value)) {
-          throw new Error("Invalid photo url");
-        }
-      },
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Image",
+      default: new mongoose.Types.ObjectId("67d80e5f7b9e9993d72b02dc"),
+     
+      
     },
     about: {
       type: String,
@@ -62,7 +61,7 @@ const userSchema = new mongoose.Schema(
 
 userSchema.methods.getJWT = async function () {
   const user = this;
-  const token = await jwt.sign({ _id: user._id }, "Hbaeel@123", {
+  const token = await jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
     expiresIn: "1d",
   });
   return token;
@@ -79,10 +78,12 @@ userSchema.methods.validatePasword = async function (passwordInputByUser) {
 
 userSchema.methods.generatePasswordResetToken = async function () {
     const user = this;
-    const resetToken = await jwt.sign({_id:user._id}, "Hbaeel@123", {
+    const resetToken = await jwt.sign({_id:user._id}, process.env.JWT_SECRET, {
         expiresIn: "1h",
     })
     return resetToken;
 }
 
+
 module.exports = mongoose.model("User", userSchema);
+
