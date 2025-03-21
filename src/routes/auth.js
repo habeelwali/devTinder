@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const validator = require("validator");
 const { validateSignUpData } = require('../utils/validation');
 const sendResetPasswordEmail = require('../config/nodemailer');
+const sendEmail = require('../config/nodemailer');
 
 
 const authRouter = express.Router();
@@ -79,7 +80,8 @@ authRouter.post("/signup", async (req, res) => {
           await user.save({ validateBeforeSave: false });
 
     // Send reset email
-    await sendResetPasswordEmail(email, token);
+    await sendEmail(email, "reset-password", token);
+    // await sendResetPasswordEmail(email, token);
 
           res.json({
               message: "Reset password  token sent to your email"})

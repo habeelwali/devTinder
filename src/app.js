@@ -7,8 +7,8 @@ const pofileRouter = require("./routes/profile");
 const requestRouter = require("./routes/requests");
 const userRouter = require("./routes/user");
 var cors = require('cors')
-
 require("dotenv").config();
+require('./utils/cronjob')
 
 
 const app = express();
