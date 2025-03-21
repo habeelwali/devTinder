@@ -8,7 +8,7 @@ const requestRouter = require("./routes/requests");
 const userRouter = require("./routes/user");
 var cors = require('cors')
 require("dotenv").config();
-require('./utils/cronjob')
+require('./cron/connectionReminder');
 
 
 const app = express();

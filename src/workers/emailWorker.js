@@ -1,5 +1,7 @@
+
 const sendEmail = require('../config/nodemailer');
-const emailQueue = require('./queue');
+const emailQueue = require('../queues/emailQueue');
+
 
 emailQueue.process(async (job, done) => {
     try {
