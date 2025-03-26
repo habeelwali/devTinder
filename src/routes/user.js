@@ -89,7 +89,6 @@ userRouter.get("/user/feed", userAuth, async (req, res) => {
       hideUsersFromFeed.add(req.toUserId.toString());
     });
     // const excludedUserIds = connection.map(user => new mongoose.Types.ObjectId(user._id));
-    // console.log("excludedUserIds",excludedUserIds);
     const getallUser = await User.find({
       $and: [
         { _id: { $ne: loginUser._id } },

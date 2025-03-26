@@ -6,30 +6,44 @@ const validator = require("validator");
 const { validateSignUpData } = require('../utils/validation');
 const sendResetPasswordEmail = require('../config/nodemailer');
 const sendEmail = require('../config/nodemailer');
-
+const Subscription = require("../models/subscription"); // Add this at the top with other imports
 
 const authRouter = express.Router();
 
 const USER_SAFE_DATA = "firstname lastname photoUrl email age about skills";
+
 authRouter.post("/signup", async (req, res) => {
-    try {
-      validateSignUpData(req);
-      const { firstname, lastname, email, password } = req.body;
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const userObj = {
-        firstname,
-        lastname,
-        email,
-        password: hashedPassword,
-      };
-  
-      const user = new User(userObj);
-      await user.save();
-      res.send("User created");
-    } catch (error) {
-      res.status(400).send("Error saving the user" + error.message);
-    }
-  });
+  try {
+    validateSignUpData(req);
+    const { firstname, lastname, email, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // 1. Create Free Subscription First
+    const freeSubscription = new Subscription({
+      plan: 'Free',
+      subscriptionStatus: 'active', // Explicitly set as active
+      connectionsUsed: 0,
+      lastResetDate: new Date(),
+      lastPlanChangeDate: new Date()
+    });
+    await freeSubscription.save();
+
+    // 2. Create User with Subscription Reference
+    const user = new User({
+      firstname,
+      lastname,
+      email,
+      password: hashedPassword,
+      subscriptionId: freeSubscription._id // Link to subscription
+    });
+
+    await user.save();
+
+    res.send("User created with Free plan");
+  } catch (error) {
+    res.status(400).send("Error saving the user: " + error.message);
+  }
+});
 
   authRouter.post("/login", async (req, res) => {
     try {
@@ -42,7 +56,6 @@ authRouter.post("/signup", async (req, res) => {
         "photoUrl","imageUrl"
 
       )
-      console.log("user", user);
       
       if (!user) {
         throw new Error("Invalid credentials");

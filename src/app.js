@@ -6,7 +6,8 @@ const authRouter = require("./routes/auth");
 const pofileRouter = require("./routes/profile");
 const requestRouter = require("./routes/requests");
 const userRouter = require("./routes/user");
-var cors = require('cors')
+var cors = require('cors');
+const SubscriptionRouter = require("./routes/subscription");
 require("dotenv").config();
 require('./cron/connectionReminder');
 
@@ -24,6 +25,7 @@ app.use("/", authRouter);
 app.use("/", pofileRouter);
 app.use("/", requestRouter);
 app.use("/",userRouter);
+app.use("/payment", SubscriptionRouter)
 
 app.get("/users", async (req, res) => {
   const userId = req.body?.userId;

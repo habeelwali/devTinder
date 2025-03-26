@@ -42,6 +42,16 @@ const sendEmail = async (email, type, tokenOrMessage = "") => {
       `;
       break;
 
+      case "subscription":
+      subject = "Thanks for Your Subscription and Welcome";
+      htmlContent = `
+        <h3> Dear ${email},</h3>
+        <p>You have received a new connection request.</p>
+        <p>Message: ${tokenOrMessage || "No additional message provided."}</p>
+        <p>Thank you for trusting us.</p>
+      `;
+      break;
+
   
 
     default:

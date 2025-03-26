@@ -55,6 +55,16 @@ const userSchema = new mongoose.Schema(
     skills: {
       type: [String],
     },
+    subscriptionId:{
+      type:mongoose.Schema.Types.ObjectId,
+      ref:"Subscription"
+    },
+    blueTick: {
+      type: Boolean,
+      default: false, // Initially, set to false
+    },
+   
+
   },
   { timestamps: true }
 );
