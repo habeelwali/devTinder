@@ -17,30 +17,36 @@ authRouter.post("/signup", async (req, res) => {
     validateSignUpData(req);
     const { firstname, lastname, email, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
-    
-    // 1. Create Free Subscription First
+
+    // 1. Create Free Subscription First (without userId yet)
     const freeSubscription = new Subscription({
       plan: 'Free',
-      subscriptionStatus: 'active', // Explicitly set as active
+      subscriptionStatus: 'active',
       connectionsUsed: 0,
       lastResetDate: new Date(),
-      lastPlanChangeDate: new Date()
+      lastPlanChangeDate: new Date(),
     });
+
     await freeSubscription.save();
 
-    // 2. Create User with Subscription Reference
+    // 2. Create User and link subscriptionId
     const user = new User({
       firstname,
       lastname,
       email,
       password: hashedPassword,
-      subscriptionId: freeSubscription._id // Link to subscription
+      subscriptionId: [freeSubscription._id], // Array format based on your schema
     });
 
     await user.save();
 
+    // 3. Now update subscription with userId
+    freeSubscription.userId = user._id;
+    await freeSubscription.save();
+
     res.send("User created with Free plan");
   } catch (error) {
+    console.error("Signup error:", error);
     res.status(400).send("Error saving the user: " + error.message);
   }
 });

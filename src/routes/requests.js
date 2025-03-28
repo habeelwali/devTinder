@@ -9,19 +9,24 @@ const { getRequestLimitByPlan } = require("../utils/subscriptionUtils");
 // Middleware to check connection request limits based on the user's subscription
 const checkRequestLimit = async (userId) => {
   const user = await User.findById(userId).populate("subscriptionId");
+  
+  // Check if subscription exists
   if (!user?.subscriptionId) {
     throw new Error("User does not have an active subscription.");
   }
 
-  const subscription = user.subscriptionId;
+  // Get fresh subscription document
+  const subscription = await Subscription.findById(user.subscriptionId._id);
+  
+  // Handle reset logic
   const now = new Date();
   const lastReset = new Date(subscription.lastResetDate);
+  const lastPlanChange = new Date(subscription.lastPlanChangeDate);
 
-  // Reset if it's a new month or plan changed
   if (
     now.getMonth() !== lastReset.getMonth() ||
     now.getFullYear() !== lastReset.getFullYear() ||
-    subscription.lastPlanChangeDate > lastReset
+    lastPlanChange > lastReset
   ) {
     subscription.connectionsUsed = 0;
     subscription.lastResetDate = now;
@@ -31,7 +36,7 @@ const checkRequestLimit = async (userId) => {
   const requestLimit = getRequestLimitByPlan(subscription.plan);
 
   if (subscription.connectionsUsed >= requestLimit) {
-    throw new Error(`You have reached your limit of ${requestLimit} connection requests. Please upgrade your plan.`);
+    throw new Error(`You have reached your limit of ${requestLimit} connection requests.`);
   }
 
   return { subscription, remaining: requestLimit - subscription.connectionsUsed };
@@ -39,6 +44,7 @@ const checkRequestLimit = async (userId) => {
 
 // Send a connection request
 requestRouter.post("/request/send/:status/:toUserId", userAuth, async (req, res) => {
+ 
   try {
     const fromUserId = req.user._id;
     const toUserId = req.params.toUserId;

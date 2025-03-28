@@ -6,8 +6,9 @@ const authRouter = require("./routes/auth");
 const pofileRouter = require("./routes/profile");
 const requestRouter = require("./routes/requests");
 const userRouter = require("./routes/user");
-var cors = require('cors');
 const SubscriptionRouter = require("./routes/subscription");
+const WebhookRoutes = require("./routes/webhook");
+var cors = require('cors');
 require("dotenv").config();
 require('./cron/connectionReminder');
 
@@ -17,6 +18,9 @@ app.use(cors({
    credentials: true,
   origin: "http://localhost:5173"
 }))
+express.raw();
+app.use("/stripe", WebhookRoutes)
+
 app.use(express.json());
 app.use(cookieParser());
 

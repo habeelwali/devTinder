@@ -1,6 +1,11 @@
 const mongoose = require("mongoose");
 
 const subscriptionSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false
+  },
   stripeCustomerId: {
     type: String,
     default: null,

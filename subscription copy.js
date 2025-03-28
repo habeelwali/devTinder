@@ -1,15 +1,60 @@
 const express = require("express");
 const SubscriptionRouter = express.Router();
 
-const stripe = require("../config/stripe");
-const User = require("../models/user");
-const Subscription = require("../models/subscription");
-const { userAuth } = require("../middlewares/auth");
-const sendEmail = require("../config/nodemailer");
-const { getRequestLimitByPlan } = require("../utils/subscriptionUtils");
-const ConnectionRequest = require("../models/connectionRequest");
+const stripe = require("./src/config/stripe");
+const User = require("./src/models/user");
+const Subscription = require("./src/models/subscription");
+const { userAuth } = require("./src/middlewares/auth");
+const sendEmail = require("./src/config/nodemailer");
+const { getRequestLimitByPlan } = require("./src/utils/subscriptionUtils");
+const ConnectionRequest = require("./src/models/connectionRequest");
 
 
+
+// Helper function to reset the connection count at the start of a new month
+const resetConnectionsIfNewMonth = async (subscription) => {
+  console.log("Subscription log :", subscription)
+  const now = new Date();
+  const lastReset = new Date(subscription.lastResetDate);
+
+  if (now.getMonth() !== lastReset.getMonth()) {
+    subscription.connectionsUsed = 0;
+    subscription.lastResetDate = now;
+    await subscription.save();
+  }
+};
+
+// Helper function to handle subscription changes
+const handleSubscriptionChange = async (userId, newPlan) => {
+  // Find the user to get their current subscription ID
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error("User not found.");
+  }
+
+  let subscription = await Subscription.findById(user.subscriptionId);
+  
+  // If no subscription exists, create a new one
+  if (!subscription) {
+    subscription = new Subscription({
+      plan: newPlan,
+      connectionsUsed: 0,
+      lastResetDate: new Date(),
+      lastPlanChangeDate: new Date(),
+    });
+    await subscription.save();
+    
+    // Link the new subscription to the user
+    user.subscriptionId = subscription._id;
+    await user.save();
+  } else {
+    // Reset counters and update plan for existing subscription
+    subscription.plan = newPlan;
+    subscription.connectionsUsed = 0;
+    subscription.lastPlanChangeDate = new Date();
+    await subscription.save();
+  }
+};
 
 // Get all products for subscription
 SubscriptionRouter.get("/products", async (req, res) => {
@@ -42,24 +87,10 @@ SubscriptionRouter.get("/products", async (req, res) => {
 
 // Subscribe to a plan
 SubscriptionRouter.post("/subscribe", userAuth, async (req, res) => {
-  const {  paymentMethodId, priceId, name } = req.body;
+  const { email, paymentMethodId, priceId, name } = req.body;
   const userId = req.user.id;
-  const email = req.user.email;
 
   try {
-
-    const existingSub = await Subscription.findOne({
-      userId,
-      subscriptionStatus: 'active',
-      plan: name
-    });
-
-    if (existingSub) {
-      return res.status(400).json({
-        message: `You already have an active ${name} plan.`,
-      });
-    };
-
     let customer;
 
     // Create or retrieve Stripe customer
@@ -107,57 +138,52 @@ SubscriptionRouter.post("/subscribe", userAuth, async (req, res) => {
 // Confirm subscription after payment
 SubscriptionRouter.post("/subscription/confirm", userAuth, async (req, res) => {
   const { subscriptionId, customerId, priceId, name } = req.body;
+  
   const userId = req.user.id;
   const userEmail = req.user.email;
 
   try {
     const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
+    console.log("stripeSubscription :",stripeSubscription)
     const plan = name;
+    console.log("setting plan :", plan, name)
 
-    if (stripeSubscription.status === 'active') {
-      // Check for existing subscription
-      let subscription = await Subscription.findOne({
-        stripeSubscriptionId: subscriptionId
+    if (stripeSubscription.status === "active") {
+      // ✅ Save in DB
+      const newSubscription = await Subscription.create({
+        stripeCustomerId: customerId,
+        stripeSubscriptionId: subscriptionId,
+        plan: plan,
+        subscriptionStatus: stripeSubscription.status,
+        connectionsUsed: 0,
+        lastResetDate: Date.now(),
       });
 
-      if (!subscription) {
-        subscription = new Subscription({
-          userId: userId,
-          stripeCustomerId: customerId,
-          stripeSubscriptionId: subscriptionId,
-          plan: plan,
-          subscriptionStatus: 'active',
-          connectionsUsed: 0,
-          lastResetDate: new Date(),
-          lastPlanChangeDate: new Date()
-        });
-      } else {
-        // Update existing subscription
-        subscription.plan = plan;
-        subscription.subscriptionStatus = 'active';
-        subscription.lastPlanChangeDate = new Date();
+      await User.findByIdAndUpdate(userId, {
+        subscriptionId: newSubscription._id,
+      });
+
+      if (plan === 'Silver') {
+        await User.findByIdAndUpdate(userId, { blueTick: true });
+        console.log('Blue Tick granted to user.');
       }
 
-      await subscription.save();
+      // Handle subscription change, reset connection count, and set the new plan
+      await handleSubscriptionChange(userId, plan);
 
-      // Update user reference
-      await User.findByIdAndUpdate(userId, {
-        subscriptionId: subscription._id,
-        ...(plan === 'Silver' && { blueTick: true })
+      await sendEmail(userEmail, 'subscription', `Your subscription has been successfully upgraded to the <b>${plan}</b>`);
+
+      res.json({
+        message: "Subscription confirmed successfully",
       });
-
-      await sendEmail(userEmail, 'subscription', `Your subscription has been successfully upgraded to <b>${plan}</b>`);
-      
-      res.json({ message: "Subscription confirmed successfully" });
     } else {
       res.status(400).send({ error: "Subscription not active." });
     }
   } catch (err) {
-    console.error("Confirm Save Error:", err);
+    console.error("❌ Confirm Save Error:", err);
     res.status(500).send({ error: err.message });
   }
 });
-
 
 // Get subscription details
 SubscriptionRouter.get("/subscription/details/:subscriptionId", async (req, res) => {
@@ -169,5 +195,7 @@ SubscriptionRouter.get("/subscription/details/:subscriptionId", async (req, res)
     res.status(500).json({ error: "Unable to fetch subscription details" });
   }
 });
+
+
 
 module.exports = SubscriptionRouter;
