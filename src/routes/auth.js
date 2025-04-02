@@ -51,38 +51,48 @@ authRouter.post("/signup", async (req, res) => {
   }
 });
 
-  authRouter.post("/login", async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      if (!validator.isEmail(email)) {
-        throw new Error("invalid email");
-      }
-  
-      const user = await User.findOne({ email: email }).populate(
-        "photoUrl","imageUrl",
-
-      ).populate("subscriptionId");
-      if (!user) {
-        throw new Error("Invalid credentials");
-      }
-  
-      const isPasswordValid = await user.validatePasword(password);
-      if (isPasswordValid) {
-        const token = await user.getJWT();
-        res.cookie("token", token)
-        const userObj = user.toObject();
-        delete userObj.password
-        res.json({
-          message:"Login Successfully",
-          data:userObj
-        })
-      } else {
-        throw new Error("Invalid credentials");
-      }
-    } catch (error) {
-      res.status(400).send("Error:" + error.message);
+authRouter.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!validator.isEmail(email)) {
+      throw new Error("invalid email");
     }
-  });
+
+    const user = await User.findOne({ email: email })
+      .populate("photoUrl", "imageUrl")
+      .populate("subscriptionId");
+    
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
+
+    const isPasswordValid = await user.validatePasword(password);
+    if (isPasswordValid) {
+      const token = await user.getJWT();
+      
+      // Updated cookie settings
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        domain: process.env.NODE_ENV === "production" ? "http://localhost:5173" : undefined
+      });
+
+      const userObj = user.toObject();
+      delete userObj.password;
+      
+      res.json({
+        message: "Login Successfully",
+        data: userObj
+      });
+    } else {
+      throw new Error("Invalid credentials");
+    }
+  } catch (error) {
+    res.status(400).send("Error:" + error.message);
+  }
+});
 
   authRouter.post("/forgotpassword", async (req, res) => {
       const {email} = req.body;
