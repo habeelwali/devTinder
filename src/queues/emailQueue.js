@@ -1,9 +1,11 @@
 // queues/emailQueue.js
 const BeeQueue = require("bee-queue");
-const redis = require("../redis/beeRedisClient"); // <-- uses ioredis-compatible client
+const redisClient = require("../redis/beeRedisClient");
 
 const emailQueue = new BeeQueue("emailQueue", {
-  createClient: (type) => redis // BeeQueue will reuse this client
+  redis: redisClient,
+  isWorker: true,
+  removeOnSuccess: true
 });
 
 module.exports = emailQueue;

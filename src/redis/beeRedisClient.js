@@ -1,23 +1,28 @@
-const IORedis = require("ioredis");
+const redis = require("redis");
+const { URL } = require("url");
 
-console.log("🔍 Redis ENV values:", {
-  redisUrl: process.env.REDIS_URL
-});
+// Parse Redis URL
+const redisUrl = new URL(process.env.REDIS_URL);
 
-const beeRedisClient = new IORedis(process.env.REDIS_URL, {
-  connectTimeout: 30000,
-  retryStrategy: (times) => {
-    console.log(`BeeQueue Redis reconnect attempt ${times}`);
-    return times > 5 ? null : 10000;
+// Create compatible client - FIXED METHOD NAME
+const beeRedisClient = redis.createClient({
+  host: redisUrl.hostname,
+  port: redisUrl.port,
+  password: redisUrl.password,
+  tls: redisUrl.protocol === "rediss:" ? {} : undefined,
+  retry_strategy: (options) => {
+    console.log(`Redis reconnect attempt ${options.attempt}`);
+    return options.attempt > 5 ? undefined : 10000;
   }
 });
 
+// Connection events
 beeRedisClient.on("connect", () => {
-  console.log("✅ BeeQueue connected to Redis Cloud");
+  console.log("✅ Redis Cloud connected:", redisUrl.hostname);
 });
 
 beeRedisClient.on("error", (err) => {
-  console.error("❌ BeeQueue Redis error:", err);
+  console.error("❌ Redis error:", err);
 });
 
 module.exports = beeRedisClient;
