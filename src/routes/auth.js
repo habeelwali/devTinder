@@ -72,11 +72,10 @@ authRouter.post("/login", async (req, res) => {
       
       // Updated cookie settings
       res.cookie("token", token, {
-        httpOnly: true,
+        httpOnly: false,
         secure: true,
         sameSite: 'none',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        domain: '.onrender.com'
+        maxAge: 7 * 24 * 60 * 60 * 1000
       });      
 
       const userObj = user.toObject();
