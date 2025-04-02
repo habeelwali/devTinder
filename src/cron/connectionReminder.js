@@ -3,7 +3,7 @@ const cron = require('node-cron');
 const { queueConnectionEmails, logQueueStatus } = require('../jobs/emailJobs');
 const { getYesterdayInterestedConnections } = require('../service/connectionService');
 
-cron.schedule('32 16 * * *', async () => {
+cron.schedule('50 16 * * *', async () => {
   try {
     console.log('⏱️ Running 8 AM connection reminder job');
 
