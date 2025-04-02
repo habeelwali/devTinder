@@ -3,7 +3,7 @@ const { createClient } = require("redis");
 
 const redisClients = {};
 console.log("🔍 Redis ENV values:", {
-    host: process.env.REDIS_HOST,
+    host: process.env.REDIS_URL,
     port: process.env.REDIS_PORT,
     password: process.env.REDIS_PASSWORD ? '✅ Provided' : '❌ Missing'
   });
@@ -12,11 +12,11 @@ console.log("🔍 Redis ENV values:", {
         return redisClients[redisDb];
     }
 
-    console.info(`Connecting to Redis at ${process.env.REDIS_HOST}:${process.env.REDIS_PORT} (DB ${redisDb})`);
+    console.info(`Connecting to Redis at ${process.env.REDIS_URL}:${process.env.REDIS_PORT} (DB ${redisDb})`);
 
     const client = createClient({
         socket: {
-            host: process.env.REDIS_HOST,
+            host: process.env.REDIS_URL,
             port: Number(process.env.REDIS_PORT),
             connectTimeout: 30000,
             reconnectStrategy: (retries) => {

@@ -1,13 +1,13 @@
 // beeRedisClient.js
 const IORedis = require("ioredis");
 console.log("🔍 Redis ENV values:", {
-    host: process.env.REDIS_HOST,
+    host: process.env.REDIS_URL,
     port: process.env.REDIS_PORT,
     password: process.env.REDIS_PASSWORD ? '✅ Provided' : '❌ Missing'
   });
   
 const beeRedisClient = new IORedis({
-  host: process.env.REDIS_HOST,
+  host: process.env.REDIS_URL,
   port: process.env.REDIS_PORT,
   password: process.env.REDIS_PASSWORD,
   connectTimeout: 30000,
