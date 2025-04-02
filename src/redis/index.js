@@ -2,8 +2,12 @@
 const { createClient } = require("redis");
 
 const redisClients = {};
-
-function createRedisClient(redisDb = 0) {
+console.log("🔍 Redis ENV values:", {
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    password: process.env.REDIS_PASSWORD ? '✅ Provided' : '❌ Missing'
+  });
+  function createRedisClient(redisDb = 0) {
     if (redisClients[redisDb]) {
         return redisClients[redisDb];
     }
