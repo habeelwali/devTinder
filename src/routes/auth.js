@@ -59,10 +59,9 @@ authRouter.post("/signup", async (req, res) => {
       }
   
       const user = await User.findOne({ email: email }).populate(
-        "photoUrl","imageUrl"
+        "photoUrl","imageUrl",
 
-      )
-      
+      ).populate("subscriptionId");
       if (!user) {
         throw new Error("Invalid credentials");
       }

@@ -14,7 +14,7 @@ profileRouter.get("/profile", userAuth, async (req, res) => {
     if (!user) {
       throw new Error("User not found");
     }
-    const userData = await User.findById(user._id ).populate("photoUrl","imageUrl").select("-password");
+    const userData = await User.findById(user._id ).populate("photoUrl","imageUrl").select("-password").populate("subscriptionId");
  
     res.json({
       message: "success",

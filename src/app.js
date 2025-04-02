@@ -31,60 +31,6 @@ app.use("/", requestRouter);
 app.use("/",userRouter);
 app.use("/payment", SubscriptionRouter)
 
-app.get("/users", async (req, res) => {
-  const userId = req.body?.userId;
-  try {
-    const getUser = await User.findById({ _id: userId });
-    res.send(getUser);
-  } catch (error) {
-    res.status(400).send("Error geting the user" + error.message);
-  }
-});
-
-app.get("/allUser", async (req, res) => {
-  try {
-    const getAllUser = await User.find({});
-    res.send(getAllUser);
-  } catch (error) {
-    res.status(400).send("Error geting the user" + error.message);
-  }
-});
-
-app.patch("/updateUser/:userId", async (req, res) => {
-  const userId = req.params?.userId;
-  const data = req.body;
-  try {
-    const Allowed_Updates = [
-      "photoUrl",
-      "firstname",
-      "lastname",
-      "gender",
-      "about",
-      "skill",
-    ];
-    const updates = Object.keys(data).every((key) =>
-      Allowed_Updates.includes(key)
-    );
-    if (!updates) {
-      throw new Error("UPDATE NOT ALLOWED");
-    }
-    const getAllUser = await User.findByIdAndUpdate({ _id: userId }, req.body);
-    res.send(getAllUser);
-  } catch (error) {
-    res.status(400).send("Error when update the user" + error.message);
-  }
-});
-
-app.delete("/deleteUser", async (req, res) => {
-  const userId = req.body?.userId;
-  try {
-    const getAllUser = await User.findByIdAndDelete({ _id: userId });
-    res.send("user deleted successfully");
-  } catch (error) {
-    res.status(400).send("Error geting the user" + error.message);
-  }
-});
-
 connectDB();
 // app.use((req, res) => {
 //   res.send("Hello World");
