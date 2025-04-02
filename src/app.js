@@ -14,16 +14,14 @@ require('./cron/connectionReminder');
 
 
 const app = express();
+app.use(express.json());
+app.use(cookieParser());
 app.use(cors({
    credentials: true,
   origin: "http://localhost:5173"
 }))
 express.raw();
 app.use("/stripe", WebhookRoutes)
-
-app.use(express.json());
-app.use(cookieParser());
-
 
 app.use("/", authRouter);
 app.use("/", pofileRouter);
